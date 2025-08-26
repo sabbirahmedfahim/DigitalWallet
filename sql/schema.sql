@@ -1,8 +1,6 @@
--- Create database
 CREATE DATABASE IF NOT EXISTS wallet_db;
 USE wallet_db;
 
--- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -11,7 +9,6 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Wallets table
 CREATE TABLE IF NOT EXISTS wallets (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -20,13 +17,12 @@ CREATE TABLE IF NOT EXISTS wallets (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- Transactions table (FIXED - with correct column names)
 CREATE TABLE IF NOT EXISTS transactions (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,  -- Changed from 'user_id' to match your code
+    user_id INT NOT NULL,  
     type ENUM('DEPOSIT', 'WITHDRAWAL', 'TRANSFER') NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    description VARCHAR(255),  -- Changed from 'description' to match your code
+    description VARCHAR(255),  
     related_user_id INT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

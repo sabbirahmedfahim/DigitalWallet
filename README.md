@@ -7,8 +7,8 @@ A Java MySQL digital wallet system with full banking operations.
 Before running this project, make sure you have the following installed:
 
 	•	Java JDK 8+ (check with java -version in your terminal)
-	•	MySQL (XAMPP recommended for cross-platform simplicity)
-	•	MySQL Connector/J (mysql-connector-j-9.4.0.jar) in the lib/ folder
+	•	MySQL (ensure MySQL server is installed and running)
+	•	MySQL Connector/J (mysql-connector-j-8.0.33.jar) in the lib/ folder
 	•	Git (if you want to clone the project)
 
 ## How to Run
@@ -29,23 +29,25 @@ cd /path/to/DigitalWallet
 
 #### macOS / Linux:
 ```bash
-javac -cp ".:lib/mysql-connector-j-9.4.0.jar" $(find src -name "*.java")
+mkdir -p bin
+javac -d bin -cp "lib/mysql-connector-j-8.0.33.jar" src/*.java src/db/*.java src/services/*.java
 ```
 
 #### Windows (PowerShell / CMD):
 ```cmd
-javac -cp ".;lib\mysql-connector-j-9.4.0.jar" src\Main.java src\db\*.java src\models\*.java src\services\*.java
+mkdir bin
+javac -d bin -cp "lib\mysql-connector-j-8.0.33.jar" src\Main.java src\db\*.java src\services\*.java
 ```
 
 ### 4. Run the application
 
 #### macOS / Linux:
 ```bash
-java -cp ".:lib/mysql-connector-j-9.4.0.jar:src" Main
+java -cp "bin:lib/mysql-connector-j-8.0.33.jar" Main
 ```
 #### Windows:
 ```cmd
-java -cp ".;lib\mysql-connector-j-9.4.0.jar;src" Main
+java -cp "bin;lib\mysql-connector-j-8.0.33.jar" Main
 ```
 
 
@@ -63,62 +65,31 @@ java -cp ".;lib\mysql-connector-j-9.4.0.jar;src" Main
 
 <br> </br>
 
-# MySQL Setup (cross-platform)
 
-These commands assume you are using XAMPP on macOS. Adjust paths for other systems if necessary.
+# MySQL Server
 
-## macOS (XAMPP)
-#### Start MySQL::
 
+Make sure MySQL server is running. You can start/stop it using your system's service manager or MySQL commands:
+
+
+#### macOS (Homebrew):
 ```bash
-sudo /Applications/XAMPP/xamppfiles/xampp startmysql
-```
-#### Stop MySQL:
-
-```bash
-sudo /Applications/XAMPP/xamppfiles/xampp stopmysql
-```
-#### Check MySQL status:
-
-```bash
-/Applications/XAMPP/xamppfiles/xampp status
+brew services start mysql
+brew services stop mysql
+brew services list
 ```
 
-<br>
+#### Linux (systemd):
+```bash
+sudo systemctl start mysql
+sudo systemctl stop mysql
+sudo systemctl status mysql
+```
 
-## Windows (XAMPP)
-#### Start MySQL::
+#### Windows:
+Start MySQL using the Services panel or with CMD commands:
 
 ```cmd
-<xampp_install_path>\xampp_start.exe
+net start mysql
+net stop mysql
 ```
-#### Stop MySQL:
-
-```cmd
-<xampp_install_path>\xampp_stop.exe
-```
-#### Check MySQL status:
-
-```cmd
-<xampp_install_path>\xampp_status.exe
-```
-
-<br>
-
-## Linux (XAMPP)
-#### Start MySQL::
-
-```bash
-sudo /opt/lampp/lampp startmysql
-```
-#### Stop MySQL:
-
-```bash
-sudo /opt/lampp/lampp stopmysql
-```
-#### Check MySQL status:
-
-```bash
-sudo /opt/lampp/lampp status
-```
-

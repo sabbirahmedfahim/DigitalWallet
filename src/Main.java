@@ -95,7 +95,7 @@ public class Main {
         if (userDAO.validateUser(email, password)) {
             currentUserId = userDAO.getUserId(email);
             currentUserEmail = email;
-            // Ensure wallet exists for login
+
             walletService.createWallet(currentUserId);
             System.out.println("Login successful! Welcome.");
         } else {
@@ -121,7 +121,7 @@ public class Main {
     }
 
     private static void deposit() {
-        // Ensure wallet exists before deposit
+
         walletService.createWallet(currentUserId);
 
         System.out.print("Enter amount to deposit: $");
@@ -141,7 +141,7 @@ public class Main {
     }
 
     private static void withdraw() {
-        // Ensure wallet exists before withdrawal
+
         walletService.createWallet(currentUserId);
 
         System.out.print("Enter amount to withdraw: $");
@@ -161,7 +161,7 @@ public class Main {
     }
 
     private static void transfer() {
-        // Ensure wallet exists before transfer
+
         walletService.createWallet(currentUserId);
 
         System.out.print("Enter recipient's email: ");
@@ -181,7 +181,7 @@ public class Main {
             return;
         }
 
-        // Ensure recipient wallet exists
+
         walletService.createWallet(recipientId);
 
         if (walletService.transfer(currentUserId, currentUserEmail, recipientId, recipientEmail, amount)) {
@@ -192,7 +192,7 @@ public class Main {
     }
 
     private static void checkBalance() {
-        // Ensure wallet exists before checking
+
         walletService.createWallet(currentUserId);
 
         double balance = walletService.checkBalance(currentUserId);
@@ -200,7 +200,7 @@ public class Main {
     }
 
     private static void transactionHistory() {
-        // Ensure wallet exists before showing history
+
         walletService.createWallet(currentUserId);
 
         transactionService.showTransactions(currentUserId);
