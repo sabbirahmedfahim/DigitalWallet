@@ -1,4 +1,4 @@
-package db;
+package db;  // Changed from "package src.db;"
 
 import java.sql.Connection;
 import java.sql.DriverManager;

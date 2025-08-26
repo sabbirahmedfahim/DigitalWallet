@@ -4,42 +4,47 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TransactionDAO {
 
-    public boolean addTransaction(int userId, String type, double amount, int toUserId) {
-        String query = "INSERT INTO transactions(user_id, type, amount, to_user_id) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, userId);
-            stmt.setString(2, type);
-            stmt.setDouble(3, amount);
-            if (toUserId == -1) stmt.setNull(4, java.sql.Types.INTEGER);
-            else stmt.setInt(4, toUserId);
-            int affected = stmt.executeUpdate();
-            return affected > 0;
+    public boolean addTransaction(int userId, String type, double amount, String description) {
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "INSERT INTO transactions (user_id, type, amount, description) VALUES (?, ?, ?, ?)";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ps.setString(2, type);
+            ps.setDouble(3, amount);
+            ps.setString(4, description);
+            ps.executeUpdate();
+            return true;
         } catch (SQLException e) {
             e.printStackTrace();
-            return false;
         }
+        return false;
     }
 
-    public void showTransactions(int userId) {
-        String query = "SELECT * FROM transactions WHERE user_id = ? OR to_user_id = ?";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setInt(1, userId);
-            stmt.setInt(2, userId);
-            ResultSet rs = stmt.executeQuery();
-            System.out.println("\n--- Transaction History ---");
+    public List<String> getTransactions(int userId) {
+        List<String> transactions = new ArrayList<>();
+        try (Connection conn = DBConnection.getConnection()) {
+            String sql = "SELECT type, amount, description, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC";
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            
             while (rs.next()) {
-                String type = rs.getString("type");
-                double amount = rs.getDouble("amount");
-                int toId = rs.getInt("to_user_id");
-                System.out.println("Type: " + type + ", Amount: " + amount + (toId > 0 ? ", To User ID: " + toId : ""));
+                String transaction = String.format("%s: $%.2f - %s (%s)",
+                    rs.getString("type"),
+                    rs.getDouble("amount"),
+                    rs.getString("description"),
+                    rs.getTimestamp("created_at").toString()
+                );
+                transactions.add(transaction);
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        return transactions;
     }
 }

@@ -1,10 +1,14 @@
 import db.UserDAO;
+import services.WalletService;
+import services.TransactionService;
 import java.util.Scanner;
 
 public class Main {
 
     private static Scanner sc = new Scanner(System.in);
     private static UserDAO userDAO = new UserDAO();
+    private static WalletService walletService = new WalletService();
+    private static TransactionService transactionService = new TransactionService();
     private static int currentUserId = -1;
     private static String currentUserEmail = "";
 
@@ -27,7 +31,7 @@ public class Main {
         System.out.print("Choose option: ");
 
         int option = sc.nextInt();
-        sc.nextLine(); // consume newline
+        sc.nextLine();
 
         switch (option) {
             case 1:
@@ -60,19 +64,19 @@ public class Main {
 
         switch (option) {
             case 1:
-                System.out.println("Deposit feature coming soon!");
+                deposit();
                 break;
             case 2:
-                System.out.println("Withdraw feature coming soon!");
+                withdraw();
                 break;
             case 3:
-                System.out.println("Transfer feature coming soon!");
+                transfer();
                 break;
             case 4:
-                System.out.println("Check Balance feature coming soon!");
+                checkBalance();
                 break;
             case 5:
-                System.out.println("Transaction History feature coming soon!");
+                transactionHistory();
                 break;
             case 6:
                 logout();
@@ -91,6 +95,8 @@ public class Main {
         if (userDAO.validateUser(email, password)) {
             currentUserId = userDAO.getUserId(email);
             currentUserEmail = email;
+            // Ensure wallet exists for login
+            walletService.createWallet(currentUserId);
             System.out.println("Login successful! Welcome.");
         } else {
             System.out.println("Invalid email or password. Please try again.");
@@ -106,10 +112,98 @@ public class Main {
         String password = sc.nextLine();
 
         if (userDAO.addUser(name, email, password)) {
-            System.out.println("Registration successful!");
+            int userId = userDAO.getUserId(email);
+            walletService.createWallet(userId);
+            System.out.println("Registration successful! Wallet created.");
         } else {
             System.out.println("Registration failed. Please try again.");
         }
+    }
+
+    private static void deposit() {
+        // Ensure wallet exists before deposit
+        walletService.createWallet(currentUserId);
+
+        System.out.print("Enter amount to deposit: $");
+        double amount = sc.nextDouble();
+        sc.nextLine();
+
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return;
+        }
+
+        if (walletService.deposit(currentUserId, amount, "Cash deposit")) {
+            System.out.printf("Deposited $%.2f successfully!\n", amount);
+        } else {
+            System.out.println("Deposit failed.");
+        }
+    }
+
+    private static void withdraw() {
+        // Ensure wallet exists before withdrawal
+        walletService.createWallet(currentUserId);
+
+        System.out.print("Enter amount to withdraw: $");
+        double amount = sc.nextDouble();
+        sc.nextLine();
+
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return;
+        }
+
+        if (walletService.withdraw(currentUserId, amount, "Cash withdrawal")) {
+            System.out.printf("Withdrew $%.2f successfully!\n", amount);
+        } else {
+            System.out.println("Withdrawal failed. Insufficient balance.");
+        }
+    }
+
+    private static void transfer() {
+        // Ensure wallet exists before transfer
+        walletService.createWallet(currentUserId);
+
+        System.out.print("Enter recipient's email: ");
+        String recipientEmail = sc.nextLine();
+        System.out.print("Enter amount to transfer: $");
+        double amount = sc.nextDouble();
+        sc.nextLine();
+
+        if (amount <= 0) {
+            System.out.println("Amount must be positive.");
+            return;
+        }
+
+        int recipientId = userDAO.getUserId(recipientEmail);
+        if (recipientId == -1) {
+            System.out.println("Recipient not found.");
+            return;
+        }
+
+        // Ensure recipient wallet exists
+        walletService.createWallet(recipientId);
+
+        if (walletService.transfer(currentUserId, currentUserEmail, recipientId, recipientEmail, amount)) {
+            System.out.printf("Transferred $%.2f to %s successfully!\n", amount, recipientEmail);
+        } else {
+            System.out.println("Transfer failed. Insufficient balance.");
+        }
+    }
+
+    private static void checkBalance() {
+        // Ensure wallet exists before checking
+        walletService.createWallet(currentUserId);
+
+        double balance = walletService.checkBalance(currentUserId);
+        System.out.printf("Your current balance: $%.2f\n", balance);
+    }
+
+    private static void transactionHistory() {
+        // Ensure wallet exists before showing history
+        walletService.createWallet(currentUserId);
+
+        transactionService.showTransactions(currentUserId);
     }
 
     private static void logout() {
