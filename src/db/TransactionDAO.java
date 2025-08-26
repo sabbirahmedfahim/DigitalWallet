@@ -6,50 +6,40 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class TransactionDAO {
-    public boolean addTransaction(int userId, String type, double amount) {
-        String sql = "INSERT INTO transactions (user_id, type, amount) VALUES (?, ?, ?)";
-        
+
+    public boolean addTransaction(int userId, String type, double amount, int toUserId) {
+        String query = "INSERT INTO transactions(user_id, type, amount, to_user_id) VALUES (?, ?, ?, ?)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ps.setString(2, type);
-            ps.setDouble(3, amount);
-            
-            return ps.executeUpdate() > 0;
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            stmt.setString(2, type);
+            stmt.setDouble(3, amount);
+            if (toUserId == -1) stmt.setNull(4, java.sql.Types.INTEGER);
+            else stmt.setInt(4, toUserId);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
         } catch (SQLException e) {
-            System.err.println("Error adding transaction: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
     public void showTransactions(int userId) {
-        String sql = "SELECT txn_id, type, amount, date FROM transactions WHERE user_id = ? ORDER BY date DESC";
-        
+        String query = "SELECT * FROM transactions WHERE user_id = ? OR to_user_id = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, userId);
+            ResultSet rs = stmt.executeQuery();
             System.out.println("\n--- Transaction History ---");
-            boolean hasTransactions = false;
-            
             while (rs.next()) {
-                hasTransactions = true;
-                System.out.println(
-                    "ID: " + rs.getInt("txn_id") +
-                    ", Type: " + rs.getString("type") +
-                    ", Amount: " + rs.getDouble("amount") +
-                    ", Date: " + rs.getTimestamp("date")
-                );
-            }
-            
-            if (!hasTransactions) {
-                System.out.println("No transactions found.");
+                String type = rs.getString("type");
+                double amount = rs.getDouble("amount");
+                int toId = rs.getInt("to_user_id");
+                System.out.println("Type: " + type + ", Amount: " + amount + (toId > 0 ? ", To User ID: " + toId : ""));
             }
         } catch (SQLException e) {
-            System.err.println("Error retrieving transactions: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 }

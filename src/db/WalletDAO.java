@@ -6,49 +6,43 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class WalletDAO {
+
     public boolean createWallet(int userId) {
-        String sql = "INSERT INTO wallets (user_id, balance) VALUES (?, 0.00)";
-        
+        String query = "INSERT INTO wallets(user_id, balance) VALUES (?, 0)";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            return ps.executeUpdate() > 0;
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
         } catch (SQLException e) {
-            System.err.println("Error creating wallet: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
     public double getBalance(int userId) {
-        String sql = "SELECT balance FROM wallets WHERE user_id = ?";
-        
+        String query = "SELECT balance FROM wallets WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            
-            if (rs.next()) {
-                return rs.getDouble("balance");
-            }
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return rs.getDouble("balance");
         } catch (SQLException e) {
-            System.err.println("Error getting balance: " + e.getMessage());
+            e.printStackTrace();
         }
-        return 0.0;
+        return 0;
     }
 
-    public boolean updateBalance(int userId, double newBalance) {
-        String sql = "UPDATE wallets SET balance = ? WHERE user_id = ?";
-        
+    public boolean updateBalance(int userId, double amount) {
+        String query = "UPDATE wallets SET balance = ? WHERE user_id = ?";
         try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            
-            ps.setDouble(1, newBalance);
-            ps.setInt(2, userId);
-            return ps.executeUpdate() > 0;
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setDouble(1, amount);
+            stmt.setInt(2, userId);
+            int affected = stmt.executeUpdate();
+            return affected > 0;
         } catch (SQLException e) {
-            System.err.println("Error updating balance: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }

@@ -1,15 +1,27 @@
 import db.DBConnection;
 import java.sql.Connection;
+import java.sql.SQLException;
 
 public class DBTest {
     public static void main(String[] args) {
-        System.out.println("Testing database connection...");
-        Connection conn = DBConnection.getConnection();
-        if (conn != null) {
-            System.out.println("SUCCESS: Database connected!");
-            DBConnection.closeConnection(conn);
-        } else {
-            System.out.println("FAILED: Could not connect to database");
+        Connection conn = null;
+        try {
+            conn = DBConnection.getConnection();
+            if (conn != null && !conn.isClosed()) {
+                System.out.println("Connected to MySQL successfully!");
+            }
+        } catch (SQLException e) {
+            System.out.println("Connection failed!");
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try {
+                    conn.close();
+                    System.out.println("Connection closed successfully.");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }

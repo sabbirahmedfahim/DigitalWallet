@@ -8,63 +8,30 @@ public class WalletService {
     private TransactionDAO transactionDAO = new TransactionDAO();
 
     public boolean deposit(int userId, double amount) {
-        if (amount <= 0) {
-            System.out.println("Deposit amount must be positive.");
-            return false;
-        }
-        
         double currentBalance = walletDAO.getBalance(userId);
-        double newBalance = currentBalance + amount;
-        
-        if (walletDAO.updateBalance(userId, newBalance)) {
-            transactionDAO.addTransaction(userId, "DEPOSIT", amount);
-            return true;
-        }
-        return false;
+        boolean updated = walletDAO.updateBalance(userId, currentBalance + amount);
+        if (updated) transactionDAO.addTransaction(userId, "Deposit", amount, -1);
+        return updated;
     }
 
     public boolean withdraw(int userId, double amount) {
-        if (amount <= 0) {
-            System.out.println("Withdrawal amount must be positive.");
-            return false;
-        }
-        
         double currentBalance = walletDAO.getBalance(userId);
-        
-        if (currentBalance < amount) {
-            System.out.println("Insufficient balance.");
-            return false;
-        }
-        
-        double newBalance = currentBalance - amount;
-        
-        if (walletDAO.updateBalance(userId, newBalance)) {
-            transactionDAO.addTransaction(userId, "WITHDRAW", amount);
-            return true;
-        }
-        return false;
+        if (currentBalance < amount) return false;
+        boolean updated = walletDAO.updateBalance(userId, currentBalance - amount);
+        if (updated) transactionDAO.addTransaction(userId, "Withdraw", amount, -1);
+        return updated;
     }
 
     public boolean transfer(int fromUserId, int toUserId, double amount) {
-        if (amount <= 0) {
-            System.out.println("Transfer amount must be positive.");
-            return false;
-        }
-        
         double fromBalance = walletDAO.getBalance(fromUserId);
-        
-        if (fromBalance < amount) {
-            System.out.println("Insufficient balance for transfer.");
-            return false;
-        }
-        
-        double toBalance = walletDAO.getBalance(toUserId);
+        if (fromBalance < amount) return false;
 
-        if (walletDAO.updateBalance(fromUserId, fromBalance - amount) &&
-            walletDAO.updateBalance(toUserId, toBalance + amount)) {
-            
-            transactionDAO.addTransaction(fromUserId, "TRANSFER_SENT", amount);
-            transactionDAO.addTransaction(toUserId, "TRANSFER_RECEIVED", amount);
+        double toBalance = walletDAO.getBalance(toUserId);
+        boolean withdrawSuccess = walletDAO.updateBalance(fromUserId, fromBalance - amount);
+        boolean depositSuccess = walletDAO.updateBalance(toUserId, toBalance + amount);
+
+        if (withdrawSuccess && depositSuccess) {
+            transactionDAO.addTransaction(fromUserId, "Transfer", amount, toUserId);
             return true;
         }
         return false;
