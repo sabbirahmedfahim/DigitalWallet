@@ -6,11 +6,10 @@ import java.sql.SQLException;
 
 public class DBConnection {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/wallet_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
-    private static final String USER = "root";          // Replace with your new password user
-    private static final String PASSWORD = "YourNewPassword";
+    private static final String URL = "jdbc:mysql://localhost:3306/wallet_db?useSSL=false&serverTimezone=UTC";
+    private static final String USER = "root";
+    private static final String PASSWORD = "787898"; // Your MySQL password
 
-    // Get connection
     public static Connection getConnection() {
         Connection conn = null;
         try {
