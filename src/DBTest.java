@@ -4,24 +4,14 @@ import java.sql.SQLException;
 
 public class DBTest {
     public static void main(String[] args) {
-        Connection conn = null;
-        try {
-            conn = DBConnection.getConnection();
+        try (Connection conn = DBConnection.getConnection()) {
             if (conn != null && !conn.isClosed()) {
                 System.out.println("Connected to MySQL successfully!");
+            } else {
+                System.out.println("Connection failed!");
             }
         } catch (SQLException e) {
-            System.out.println("Connection failed!");
             e.printStackTrace();
-        } finally {
-            if (conn != null) {
-                try {
-                    conn.close();
-                    System.out.println("Connection closed successfully.");
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 }

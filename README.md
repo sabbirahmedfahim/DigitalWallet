@@ -93,11 +93,3 @@ Start MySQL using the Services panel or with CMD commands:
 net start mysql
 net stop mysql
 ```
-
-# Quick Compile & Run for Mac-OS
-```bash
-cd "/Users/sabbirahmedfahim/Documents/Programming/DigitalWallet"
-mkdir -p bin
-javac -d bin -cp "lib/mysql-connector-j-8.0.33.jar" src/*.java src/db/*.java src/services/*.java
-java -cp "bin:lib/mysql-connector-j-8.0.33.jar" Main
-```

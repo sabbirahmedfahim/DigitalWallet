@@ -1,24 +1,29 @@
 package db;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import models.User;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserDAO {
 
+    private User map(ResultSet rs) throws SQLException {
+        User u = new User(rs.getString("name"), rs.getString("email"), rs.getString("password"));
+        u.setId(rs.getInt("id"));
+        return u;
+    }
+
     public boolean userExists(String email) {
-        boolean exists = false;
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT * FROM users WHERE email = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+        String sql = "SELECT 1 FROM users WHERE email = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
-            ResultSet rs = ps.executeQuery();
-            exists = rs.next();
+            return ps.executeQuery().next();
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        return exists;
     }
 
     public boolean addUser(String name, String email, String password) {
@@ -26,10 +31,9 @@ public class UserDAO {
             System.out.println("User already exists!");
             return false;
         }
-
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
-            PreparedStatement ps = conn.prepareStatement(sql);
+        String sql = "INSERT INTO users (name, email, password) VALUES (?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, name);
             ps.setString(2, email);
             ps.setString(3, password);
@@ -37,38 +41,47 @@ public class UserDAO {
             return true;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        return false;
     }
 
     public boolean validateUser(String email, String password) {
-        boolean isValid = false;
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT * FROM users WHERE email = ? AND password = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
+        String sql = "SELECT 1 FROM users WHERE email = ? AND password = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, email);
             ps.setString(2, password);
-            ResultSet rs = ps.executeQuery();
-            isValid = rs.next();
+            return ps.executeQuery().next();
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-        return isValid;
     }
 
     public int getUserId(String email) {
-    int userId = -1;
-    try (Connection conn = DBConnection.getConnection()) {
         String sql = "SELECT id FROM users WHERE email = ?";
-        PreparedStatement ps = conn.prepareStatement(sql);
-        ps.setString(1, email);
-        ResultSet rs = ps.executeQuery();
-        if (rs.next()) {
-            userId = rs.getInt("id");
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, email);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt("id") : -1;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return -1;
         }
-    } catch (SQLException e) {
-        e.printStackTrace();
     }
-    return userId;
-}
+
+    public List<User> findUsersByNamePrefix(String prefix) {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE name LIKE ? ORDER BY name";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, prefix + "%");
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) list.add(map(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

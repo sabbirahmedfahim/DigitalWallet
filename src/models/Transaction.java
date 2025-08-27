@@ -1,61 +1,77 @@
 package models;
 
-import java.sql.Timestamp;
+import db.TransactionDAO;
+import db.WalletDAO;
 
-public class Transaction {
-    private int txnId;
-    private int userId;
-    private String type;
-    private double amount;
-    private Timestamp date;
+public abstract class Transaction {
 
-    public Transaction() {}
+    protected int userId;
+    protected double amount;
+    protected String description;
 
-    public Transaction(int txnId, int userId, String type, double amount, Timestamp date) {
-        this.txnId = txnId;
+    public Transaction(int userId, double amount, String description) {
         this.userId = userId;
-        this.type = type;
         this.amount = amount;
-        this.date = date;
+        this.description = description;
     }
 
-    public int getTxnId() {
-        return txnId;
+    public abstract boolean apply(WalletDAO walletDAO, TransactionDAO txnDAO);
+
+    public static class DepositOp extends Transaction {
+        public DepositOp(int userId, double amount, String description) { super(userId, amount, description); }
+        @Override
+        public boolean apply(WalletDAO walletDAO, TransactionDAO txnDAO) {
+            walletDAO.ensureWallet(userId);
+            double current = walletDAO.getBalance(userId);
+            boolean ok = walletDAO.updateBalance(userId, current + amount);
+            if (ok) txnDAO.addTransaction(userId, "DEPOSIT", amount, description);
+            return ok;
+        }
     }
 
-    public void setTxnId(int txnId) {
-        this.txnId = txnId;
+    public static class WithdrawOp extends Transaction {
+        public WithdrawOp(int userId, double amount, String description) { super(userId, amount, description); }
+        @Override
+        public boolean apply(WalletDAO walletDAO, TransactionDAO txnDAO) {
+            walletDAO.ensureWallet(userId);
+            double current = walletDAO.getBalance(userId);
+            if (current < amount) return false;
+            boolean ok = walletDAO.updateBalance(userId, current - amount);
+            if (ok) txnDAO.addTransaction(userId, "WITHDRAWAL", amount, description);
+            return ok;
+        }
     }
 
-    public int getUserId() {
-        return userId;
-    }
+    public static class TransferOp extends Transaction {
+        private final int toUserId;
+        private final String toEmail;
+        private final String fromEmail;
 
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
+        public TransferOp(int fromUserId, String fromEmail, int toUserId, String toEmail, double amount) {
+            super(fromUserId, amount, "Transfer to " + toEmail);
+            this.toUserId = toUserId;
+            this.toEmail = toEmail;
+            this.fromEmail = fromEmail;
+        }
 
-    public String getType() {
-        return type;
-    }
+        @Override
+        public boolean apply(WalletDAO walletDAO, TransactionDAO txnDAO) {
+            walletDAO.ensureWallet(userId);
+            walletDAO.ensureWallet(toUserId);
 
-    public void setType(String type) {
-        this.type = type;
-    }
+            double fromBal = walletDAO.getBalance(userId);
+            if (fromBal < amount) return false;
 
-    public double getAmount() {
-        return amount;
-    }
+            double toBal = walletDAO.getBalance(toUserId);
 
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public Timestamp getDate() {
-        return date;
-    }
-
-    public void setDate(Timestamp date) {
-        this.date = date;
+            boolean w1 = walletDAO.updateBalance(userId, fromBal - amount);
+            boolean w2 = walletDAO.updateBalance(toUserId, toBal + amount);
+            if (w1 && w2) {
+                txnDAO.addTransaction(userId,  "TRANSFER", amount, "Transfer to " + toEmail,  toUserId);
+                txnDAO.addTransaction(toUserId,"TRANSFER", amount, "Transfer from " + fromEmail, userId);
+                return true;
+            }
+            return false;
+        }
     }
 }

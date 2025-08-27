@@ -6,46 +6,56 @@ import java.math.BigDecimal;
 public class WalletDAO {
 
     public boolean createWallet(int userId) {
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "INSERT INTO wallets (user_id, balance) VALUES (?, 0.00)";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, userId);
-            ps.executeUpdate();
-            return true;
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
+        String check = "SELECT id FROM wallets WHERE user_id = ?";
+        String insert = "INSERT INTO wallets (user_id, balance) VALUES (?, 0.00)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement psCheck = conn.prepareStatement(check)) {
 
-    public double getBalance(int userId) {
-        double balance = 0.0;
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "SELECT balance FROM wallets WHERE user_id = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setInt(1, userId);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                BigDecimal bd = rs.getBigDecimal("balance");
-                if (bd != null) balance = bd.doubleValue();
+            psCheck.setInt(1, userId);
+            ResultSet rs = psCheck.executeQuery();
+            if (rs.next()) return true; 
+
+            try (PreparedStatement psIns = conn.prepareStatement(insert)) {
+                psIns.setInt(1, userId);
+                psIns.executeUpdate();
+                return true;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return balance;
+        return false;
     }
 
-    public boolean updateBalance(int userId, double amount) {
-        try (Connection conn = DBConnection.getConnection()) {
-            String sql = "UPDATE wallets SET balance = ? WHERE user_id = ?";
-            PreparedStatement ps = conn.prepareStatement(sql);
-            ps.setBigDecimal(1, BigDecimal.valueOf(amount));
-            ps.setInt(2, userId);
-            int rows = ps.executeUpdate();
-            return rows > 0;
+    public void ensureWallet(int userId) {
+        createWallet(userId);
+    }
+
+    public double getBalance(int userId) {
+        String sql = "SELECT balance FROM wallets WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                BigDecimal bd = rs.getBigDecimal("balance");
+                return bd != null ? bd.doubleValue() : 0.0;
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return false;
+        return 0.0;
+    }
+
+    public boolean updateBalance(int userId, double amount) {
+        String sql = "UPDATE wallets SET balance = ? WHERE user_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setBigDecimal(1, BigDecimal.valueOf(amount));
+            ps.setInt(2, userId);
+            return ps.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
